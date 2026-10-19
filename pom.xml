@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.keillen</groupId>
-	<artifactId>animeTracker</artifactId>
+	<artifactId>ShelfLog</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
 	<description/>

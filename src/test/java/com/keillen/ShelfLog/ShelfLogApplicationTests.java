@@ -1,10 +1,10 @@
-package com.keillen.animeTracker;
+package com.keillen.ShelfLog;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class AnimeTrackerApplicationTests {
+class ShelfLogApplicationTests {
 
 	@Test
 	void contextLoads() {
