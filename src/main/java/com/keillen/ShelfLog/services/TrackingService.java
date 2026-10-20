@@ -2,9 +2,9 @@ package com.keillen.ShelfLog.services;
 
 import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.keillen.ShelfLog.dto.TrackingResponse;
@@ -55,8 +55,9 @@ public class TrackingService {
     }
     
 
-    //Used to start tracking a media or if it is already getting tracked return that row
-    @Transactional 
+    //No Transactional so that we can check if it has been double pressed and if so then return the row
+    //Reason is the insert on Transactional runs after the return not the save
+    //Also when it is returned and fails you can not change it at that point
     public TrackingResponse start(Integer userId, Integer mediaId){
 
         //Check if media is valid or not real
@@ -86,11 +87,18 @@ public class TrackingService {
         newTracking.setMedia(media);
         newTracking.setStatus(status);
         //Becuase we use it later assign it to a variable so when it runs you use the results
-        Tracking result = trackingRepository.save(newTracking);
+        try{
+            //Save the contents and insert into the database
+            Tracking result = trackingRepository.saveAndFlush(newTracking);
 
-
-        //Return through the helper
-        return toResponse(result);
+            //Return through the helper
+            return toResponse(result);
+        } catch(DataIntegrityViolationException e){
+            //return the row that already exists by the treacking id and user id used
+            return trackingRepository.findById(trackingId).map(this::toResponse)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, 
+                    "Data integrity violation occurred, but row could not be retrieved.", e));
+        }
 
     }
 }
