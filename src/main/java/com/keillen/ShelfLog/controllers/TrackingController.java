@@ -1,11 +1,16 @@
 package com.keillen.ShelfLog.controllers;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.keillen.ShelfLog.dto.TrackingResponse;
+import com.keillen.ShelfLog.dto.UpdateTrackingRequest;
 import com.keillen.ShelfLog.services.TrackingService;
+
+import jakarta.validation.Valid;
 
 /**
  * Controller for Tracking endpoints
@@ -27,4 +32,11 @@ public class TrackingController {
     public TrackingResponse startTracking(@PathVariable Integer id, @AuthenticationPrincipal Integer userId){
         return trackingService.start(userId, id);
     }
+
+    @PatchMapping("/media/{id}/tracking")
+    //@Vaild to inforce the constraints in the DTO
+    public TrackingResponse updateTracking(@PathVariable Integer id, @AuthenticationPrincipal Integer userId, 
+        @Valid @RequestBody UpdateTrackingRequest request){
+            return trackingService.update(userId, id, request);
+        }
 }

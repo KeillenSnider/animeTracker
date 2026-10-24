@@ -4,6 +4,7 @@ import com.keillen.ShelfLog.entities.Format;
 
 /**
  * TrackingResponse is a data transfer object
+ * returns a tracked row
  */
 
 public record TrackingResponse(

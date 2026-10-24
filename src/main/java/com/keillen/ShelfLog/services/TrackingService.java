@@ -5,9 +5,11 @@ import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.keillen.ShelfLog.dto.TrackingResponse;
+import com.keillen.ShelfLog.dto.UpdateTrackingRequest;
 import com.keillen.ShelfLog.entities.Media;
 import com.keillen.ShelfLog.entities.Status;
 import com.keillen.ShelfLog.entities.Tracking;
@@ -100,5 +102,45 @@ public class TrackingService {
                     "Data integrity violation occurred, but row could not be retrieved.", e));
         }
 
+    }
+
+    //Transactional because it will read change then save all together at the end nothing needs to be checked inbetwen
+    @Transactional
+    public TrackingResponse update(Integer userId, Integer mediaId, UpdateTrackingRequest request){
+
+        //Create a tracking id from the probided id's
+        TrackingId trackingId = new TrackingId(userId, mediaId);
+        //Look it up and see if it is real if not then throw a 404 Not Found
+        Tracking tracking = trackingRepository.findById(trackingId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Row does not exist"));
+
+        //Handles Status
+        if(request.status() != null){
+            //Find the status that is used in the request
+            Status status = statusRepository.findByName(request.status())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status is unknown"));
+            //Override and set the status
+            tracking.setStatus(status);
+        }
+
+        //Handles Current Ep Page
+        if(request.currentEpPage() != null){
+            //Override and set the new number
+            tracking.setCurrentEpPage(request.currentEpPage());
+        }
+
+        //Handles user Rating
+        if(request.userRating() != null){
+            //Convert to 0-100 for the table
+            //Casted to an Int
+            Integer rating = (int) Math.round(request.userRating() * 10);
+
+            //Override and set the new Rating
+            tracking.setUserRating(rating);
+        }
+
+        //Save the changes the return them to be displayed
+        Tracking result = trackingRepository.save(tracking);
+        return toResponse(result);
     }
 }
