@@ -22,6 +22,8 @@ import com.keillen.ShelfLog.repositories.UserRepository;
 /**
  * Business logic for tracking.
  * Lets a user start tracking a title, and returns the existing row if they already are.
+ * Lets them update a row
+ * Lets them delete a row
  */
 
 //Service is used to mark the class as a Spring-managed service, allowing it to be injected into other components.
@@ -142,5 +144,19 @@ public class TrackingService {
         //Save the changes the return them to be displayed
         Tracking result = trackingRepository.save(tracking);
         return toResponse(result);
+    }
+
+
+    //Delete a row in tracking
+    public void delete(Integer userId, Integer mediaId){
+        //Create a trackingid used to delete the row
+        TrackingId trackingId = new TrackingId(userId, mediaId);
+        // Check if it exists if not throw a 404
+        //Better because it does not load the object it just checks if it is there
+        if (!trackingRepository.existsById(trackingId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Row does not exist");
+        }
+        //Delete the row by the Id given
+        trackingRepository.deleteById(trackingId);
     }
 }
