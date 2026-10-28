@@ -1,5 +1,6 @@
 package com.keillen.ShelfLog.services;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -92,6 +93,10 @@ public class TrackingService {
         newTracking.setStatus(status);
         //Becuase we use it later assign it to a variable so when it runs you use the results
         try{
+
+            //Set the last updated date adn time
+            newTracking.setLastUpdated(LocalDateTime.now());
+
             //Save the contents and insert into the database
             Tracking result = trackingRepository.saveAndFlush(newTracking);
 
@@ -140,6 +145,9 @@ public class TrackingService {
             //Override and set the new Rating
             tracking.setUserRating(rating);
         }
+
+        //Update last updated
+        tracking.setLastUpdated(LocalDateTime.now());
 
         //Save the changes the return them to be displayed
         Tracking result = trackingRepository.save(tracking);

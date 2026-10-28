@@ -1,5 +1,7 @@
 package com.keillen.ShelfLog.entities;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -56,6 +58,9 @@ public class Tracking {
     @Max(100)
     private Integer userRating;
 
+    @Column 
+    private LocalDateTime lastUpdated;
+
 
     //Getters and Setters
 
@@ -105,5 +110,13 @@ public class Tracking {
 
     public void setUserRating(Integer userRating){
         this.userRating = userRating;
+    }
+
+    public LocalDateTime getLastUpdated(){
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated){
+        this.lastUpdated = lastUpdated;
     }
 }
