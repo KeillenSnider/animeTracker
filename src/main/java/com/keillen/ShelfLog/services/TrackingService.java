@@ -1,16 +1,23 @@
 package com.keillen.ShelfLog.services;
-
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.keillen.ShelfLog.dto.PageResponse;
 import com.keillen.ShelfLog.dto.TrackingResponse;
+import com.keillen.ShelfLog.dto.TrackingSummary;
 import com.keillen.ShelfLog.dto.UpdateTrackingRequest;
+import com.keillen.ShelfLog.entities.Format;
 import com.keillen.ShelfLog.entities.Media;
 import com.keillen.ShelfLog.entities.Status;
 import com.keillen.ShelfLog.entities.Tracking;
@@ -47,16 +54,31 @@ public class TrackingService {
 
     }
 
+    //Rating converter
+    private Double convertRating(Tracking tracking){
+
+        //If it is null keep it null if not divide by 10 for a 1-10
+        return tracking.getUserRating() == null ? null : tracking.getUserRating() / 10.0;
+
+    }
+
     //Helper for a response
     private TrackingResponse toResponse(Tracking tracking){
-
-        //If the user gave a rating convert it back to 1-10
-        Double userRating = tracking.getUserRating() == null ? null : tracking.getUserRating() / 10.0;
 
         //Created and return a Tracking response
         return new TrackingResponse(tracking.getMedia().getId(), tracking.getMedia().getTitle(), 
             tracking.getMedia().getFormat(), tracking.getStatus().getName(), 
-            tracking.getCurrentEpPage(), userRating);
+            tracking.getCurrentEpPage(), convertRating(tracking));
+    }
+
+    //Helper for a tracking summary
+    private TrackingSummary toSummary(Tracking tracking){
+
+        //Create a TrackingSummary
+        return new TrackingSummary(tracking.getMedia().getId(), tracking.getMedia().getTitle(),
+            tracking.getMedia().getFormat(), tracking.getMedia().getImageUrl(),
+            tracking.getStatus().getName(), tracking.getCurrentEpPage(), convertRating(tracking));
+            
     }
     
 
@@ -166,5 +188,34 @@ public class TrackingService {
         }
         //Delete the row by the Id given
         trackingRepository.deleteById(trackingId);
+    }
+
+    //Read only
+    @Transactional(readOnly = true)
+    //This method will return one page plus how many are avaliable
+    public PageResponse<TrackingSummary> list(Integer userId, String status, Format format, int page, int limit){
+
+        //The most items allowed on one page (50 pages)
+        int size = Math.min(Math.max(limit, 1), 50);
+
+        //How to sort
+        //First by most recently updated and then if there is a tie then by id
+        Pageable pageable = PageRequest.of(Math.max(page, 1) - 1, size, Sort.by(Sort.Order.desc("lastUpdated").nullsLast(), Sort.Order.asc("id.mediaId")));
+
+        //The rows on the requested page that match the filters
+        Page<Tracking> pageResult = trackingRepository.search(userId, status, format, pageable);
+
+        //Map this to the DTO and then return it
+        List<TrackingSummary> summaries = pageResult
+            .map(this::toSummary)
+            .getContent();
+
+        //Return the pages items plus the totals with the page numbers starting at 1
+        return new PageResponse<>(
+            summaries,
+            pageResult.getTotalElements(),
+            pageResult.getTotalPages(),
+            pageResult.getNumber() + 1
+        );
     }
 }
